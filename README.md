@@ -17,7 +17,7 @@
 - **Зависимости**: Python 3.11, `flask`, `pyodbc`, `pandas` (см. `requirements.txt`), ODBC Driver 17 for SQL Server.
 - **Сеть**: Доступ к SQL Server в локальной сети учебного заведения (или VPN/локальный SQL Server Express).
 
-## файловая стркутура
+## Файловая структура
 ```
 MasterPol/
 ├── app.py                # Flask-приложение
@@ -33,7 +33,7 @@ MasterPol/
 │   ├── upload.html      # Импорт CSV
 │   └── calc.html        # Расчёт материалов
 ├── static/               # Статические файлы
-│   ├── css/style.css    # Стили (Segoe UI, #FFFFFF/#F4E8D3/#67BA80)
+│   ├── styles.css    # Стили (Segoe UI, #FFFFFF/#F4E8D3/#67BA80)
 │   ├── images/logo.png  # Логотип
 │   └── uploads/         # CSV-файлы
 ├── sql/

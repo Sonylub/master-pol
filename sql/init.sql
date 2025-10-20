@@ -1,3 +1,8 @@
+-- Использование базы
+USE PartnerManagement_01_MasterPol;;
+GO
+
+-- Создание таблиц
 CREATE TABLE Partners (
     PartnerID INT IDENTITY(1,1) PRIMARY KEY,
     Name NVARCHAR(150) NOT NULL,
@@ -9,12 +14,16 @@ CREATE TABLE Partners (
     Rating DECIMAL(3,2),
     CreatedAt DATETIME DEFAULT GETDATE()
 );
+GO
+
 CREATE TABLE Managers (
     ManagerID INT IDENTITY(1,1) PRIMARY KEY,
     FullName NVARCHAR(150) NOT NULL,
     Phone NVARCHAR(20),
     Email NVARCHAR(100)
 );
+GO
+
 CREATE TABLE Suppliers (
     SupplierID INT IDENTITY(1,1) PRIMARY KEY,
     Name NVARCHAR(150) NOT NULL,
@@ -22,6 +31,8 @@ CREATE TABLE Suppliers (
     Phone NVARCHAR(20),
     Email NVARCHAR(100)
 );
+GO
+
 CREATE TABLE Materials (
     MaterialID INT IDENTITY(1,1) PRIMARY KEY,
     Name NVARCHAR(150) NOT NULL,
@@ -30,6 +41,8 @@ CREATE TABLE Materials (
     QuantityInStock DECIMAL(10,2) DEFAULT 0,
     MinAllowedQuantity DECIMAL(10,2) DEFAULT 0
 );
+GO
+
 CREATE TABLE Supplies (
     SupplyID INT IDENTITY(1,1) PRIMARY KEY,
     SupplierID INT NOT NULL,
@@ -41,6 +54,8 @@ CREATE TABLE Supplies (
     CONSTRAINT FK_Supplies_Materials FOREIGN KEY (MaterialID) REFERENCES Materials(MaterialID),
     CONSTRAINT FK_Supplies_Managers FOREIGN KEY (ManagerID) REFERENCES Managers(ManagerID)
 );
+GO
+
 CREATE TABLE Products (
     ProductID INT IDENTITY(1,1) PRIMARY KEY,
     Name NVARCHAR(150) NOT NULL,
@@ -51,6 +66,8 @@ CREATE TABLE Products (
     MinPartnerPrice MONEY,
     CreatedAt DATETIME DEFAULT GETDATE()
 );
+GO
+
 CREATE TABLE ProductComposition (
     ProductCompositionID INT IDENTITY(1,1) PRIMARY KEY,
     ProductID INT NOT NULL,
@@ -59,6 +76,8 @@ CREATE TABLE ProductComposition (
     CONSTRAINT FK_ProductComposition_Products FOREIGN KEY (ProductID) REFERENCES Products(ProductID),
     CONSTRAINT FK_ProductComposition_Materials FOREIGN KEY (MaterialID) REFERENCES Materials(MaterialID)
 );
+GO
+
 CREATE TABLE Requests (
     RequestID INT IDENTITY(1,1) PRIMARY KEY,
     PartnerID INT NOT NULL,
@@ -73,12 +92,15 @@ CREATE TABLE Requests (
     CONSTRAINT FK_Requests_Managers FOREIGN KEY (ManagerID) REFERENCES Managers(ManagerID),
     CONSTRAINT FK_Requests_Products FOREIGN KEY (ProductID) REFERENCES Products(ProductID)
 );
+GO
+
+-- Функция расчёта скидки
 CREATE FUNCTION fn_GetPartnerDiscount (@PartnerID INT)
 RETURNS DECIMAL(5,2)
 AS
 BEGIN
     DECLARE @TotalQuantity INT;
-    SELECT @TotalQuantity = SUM(Quantity)
+    SELECT @TotalQuantity = ISNULL(SUM(Quantity), 0)
     FROM Requests
     WHERE PartnerID = @PartnerID AND Status = N'Выполнена';
     RETURN CASE
@@ -88,6 +110,8 @@ BEGIN
     END;
 END;
 GO
+
+-- Функция расчёта материалов
 CREATE FUNCTION fn_CalcRequiredMaterial (
     @ProductTypeID INT,
     @MaterialID INT,
@@ -102,9 +126,9 @@ BEGIN
     IF @ProductTypeID <= 0 OR @MaterialID <= 0 OR @Quantity <= 0 OR @Param1 <= 0 OR @Param2 <= 0
         RETURN -1;
     DECLARE @MaterialNeeded DECIMAL(10,2);
-    SELECT @MaterialNeeded = SUM(pc.Quantity * @Quantity * @Param1 * @Param2 * (1 + @DefectRate))
+    SELECT @MaterialNeeded = ISNULL(SUM(pc.Quantity * @Quantity * @Param1 * @Param2 * (1 + @DefectRate)), 0)
     FROM ProductComposition pc
     WHERE pc.ProductID = @ProductTypeID AND pc.MaterialID = @MaterialID;
-    RETURN CEILING(ISNULL(@MaterialNeeded, 0));
+    RETURN CEILING(@MaterialNeeded);
 END;
 GO
