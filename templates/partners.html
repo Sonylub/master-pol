@@ -7,6 +7,31 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="/static/css/styles.css">
     <link rel="icon" href="/static/images/logo.png">
+    <style>
+        .modal-content {
+            background-color: #FFFFFF;
+            color: #000000;
+        }
+        .modal-header, .modal-footer {
+            border-color: #F4E8D3;
+        }
+        .delete-icon, .view-icon {
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .delete-icon {
+            color: #dc3545;
+        }
+        .delete-icon:hover {
+            color: #a71d2a;
+        }
+        .view-icon {
+            color: #67BA80;
+        }
+        .view-icon:hover {
+            color: #5aa36f;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -25,11 +50,14 @@
                     {% endif %}
                     <li><a href="/partners" class="active">Партнёры</a></li>
                     {% if current_user.is_authenticated and current_user.role == 'manager' %}
-                        <li><a href="/add_partner">Добавить партнёра</a></li>
+                        <li><a href="#" data-bs-toggle="modal" data-bs-target="#addPartnerModal">Добавить партнёра</a></li>
                     {% endif %}
                     <li><a href="/requests">Заявки</a></li>
                     {% if current_user.is_authenticated and current_user.role == 'manager' %}
                         <li><a href="/add_request">Добавить заявку</a></li>
+                    {% endif %}
+                    {% if current_user.is_authenticated and current_user.role == 'partner' %}
+                        <li><a href="/my_requests">Мои заявки</a></li>
                     {% endif %}
                     <li><a href="/supplies">Поставки</a></li>
                     <li><a href="/materials">Материалы</a></li>
@@ -37,7 +65,7 @@
                     {% if current_user.is_authenticated and current_user.role == 'manager' %}
                         <li><a href="/upload">Импорт CSV</a></li>
                     {% endif %}
-                    <li><a href="calc.html">Расчёт</a></li>
+                    <li><a href="/calc">Расчёт</a></li>
                 </ul>
             </nav>
         </div>
@@ -55,6 +83,38 @@
                     {% endfor %}
                 {% endif %}
             {% endwith %}
+
+            <!-- Поиск и фильтры -->
+            <form method="GET" class="mb-4">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="search" class="form-label">Поиск по наименованию</label>
+                        <input type="text" class="form-control" id="search" name="search" value="{{ request.args.get('search', '') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="rating_filter" class="form-label">Рейтинг (мин)</label>
+                        <select class="form-control" id="rating_filter" name="rating_filter">
+                            <option value="">Все</option>
+                            <option value="3" {% if request.args.get('rating_filter') == '3' %}selected{% endif %}>3+</option>
+                            <option value="4" {% if request.args.get('rating_filter') == '4' %}selected{% endif %}>4+</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sort" class="form-label">Сортировка</label>
+                        <select class="form-control" id="sort" name="sort">
+                            <option value="name_asc" {% if request.args.get('sort') == 'name_asc' %}selected{% endif %}>Наименование (А-Я)</option>
+                            <option value="name_desc" {% if request.args.get('sort') == 'name_desc' %}selected{% endif %}>Наименование (Я-А)</option>
+                            <option value="rating_desc" {% if request.args.get('sort') == 'rating_desc' %}selected{% endif %}>Рейтинг (убыв.)</option>
+                            <option value="discount_desc" {% if request.args.get('sort') == 'discount_desc' %}selected{% endif %}>Скидка (убыв.)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-accent mt-4">Применить</button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Таблица партнёров -->
             {% if partners %}
             <table class="table table-bordered">
                 <thead>
@@ -68,6 +128,7 @@
                         <th>Email</th>
                         <th>Рейтинг</th>
                         <th>Скидка</th>
+                        <th>Действия</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -82,6 +143,22 @@
                         <td>{{ partner[6] or '-' }}</td>
                         <td>{{ partner[7] or '-' }}</td>
                         <td>{{ (partner[8] * 100) | int }}%</td>
+                        <td>
+                            <a href="/partner_requests/{{ partner[0] }}" class="view-icon" title="Просмотр реализации">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                                    <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                                    <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                                </svg>
+                            </a>
+                            {% if current_user.is_authenticated and current_user.role == 'manager' %}
+                            <a href="#" class="delete-icon" data-bs-toggle="modal" data-bs-target="#deletePartnerModal" data-partner-id="{{ partner[0] }}" data-partner-name="{{ partner[1] }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                </svg>
+                            </a>
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -89,9 +166,79 @@
             {% else %}
             <p class="text-muted">Партнёры не найдены. Проверьте данные в таблице Partners.</p>
             {% endif %}
+
+            <!-- Модальное окно для добавления партнёра -->
             {% if current_user.is_authenticated and current_user.role == 'manager' %}
-            <a href="/add_partner" class="btn btn-accent">Добавить партнёра</a>
+            <div class="modal fade" id="addPartnerModal" tabindex="-1" aria-labelledby="addPartnerModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addPartnerModalLabel">Добавить партнёра</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="POST" action="/add_partner">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Наименование</label>
+                                    <input type="text" class="form-control" id="name" name="name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="legal_address" class="form-label">Юридический адрес</label>
+                                    <input type="text" class="form-control" id="legal_address" name="legal_address">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="inn" class="form-label">ИНН</label>
+                                    <input type="text" class="form-control" id="inn" name="inn">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="director_full_name" class="form-label">ФИО директора</label>
+                                    <input type="text" class="form-control" id="director_full_name" name="director_full_name">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="phone" class="form-label">Телефон</label>
+                                    <input type="text" class="form-control" id="phone" name="phone">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="rating" class="form-label">Рейтинг (0–5)</label>
+                                    <input type="number" class="form-control" id="rating" name="rating" min="0" max="5" step="0.1">
+                                </div>
+                                <button type="submit" class="btn btn-accent">Добавить</button>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             {% endif %}
+
+            <!-- Модальное окно для удаления партнёра -->
+            {% if current_user.is_authenticated and current_user.role == 'manager' %}
+            <div class="modal fade" id="deletePartnerModal" tabindex="-1" aria-labelledby="deletePartnerModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="deletePartnerModalLabel">Удалить партнёра</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Вы уверены, что хотите удалить партнёра <strong id="partner-name"></strong>?</p>
+                            <form id="deletePartnerForm" method="POST" action="/delete_partner">
+                                <input type="hidden" id="partner-id" name="partner_id">
+                                <button type="submit" class="btn btn-danger">Удалить</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
             <a href="/" class="btn btn-secondary">Назад</a>
         </section>
     </main>
@@ -101,5 +248,18 @@
             <p>© 2025 Мастер Пол. Все права защищены.</p>
         </div>
     </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Передача данных в модальное окно удаления
+        document.querySelectorAll('.delete-icon').forEach(icon => {
+            icon.addEventListener('click', function() {
+                const partnerId = this.getAttribute('data-partner-id');
+                const partnerName = this.getAttribute('data-partner-name');
+                document.getElementById('partner-name').textContent = partnerName;
+                document.getElementById('partner-id').value = partnerId;
+            });
+        });
+    </script>
 </body>
 </html>

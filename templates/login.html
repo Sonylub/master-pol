@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход | Мастер Пол</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="icon" href="/static/images/logo.png">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <img src="/static/images/logo.png" alt="Мастер Пол" class="logo-img">
+            </div>
+            <nav>
+                <ul class="nav">
+                    <li><a href="/login" class="active">Вход</a></li>
+                    <li><a href="/register">Регистрация</a></li>
+                    <li><a href="/partners">Партнёры</a></li>
+                    ...
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="auth-form">
+            <h1>Вход</h1>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ 'alert-success' if category == 'success' else 'alert-danger' }}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Имя пользователя</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Пароль</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-accent">Войти</button>
+            </form>
+            <p class="mt-3">Нет аккаунта? <a href="/register">Зарегистрироваться</a></p>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>© 2025 Мастер Пол. Все права защищены.</p>
+        </div>
+    </footer>
+</body>
+</html>

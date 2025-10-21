@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Импорт партнёров | Мастер Пол</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="icon" href="/static/images/logo.png">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <img src="/static/images/logo.png" alt="Мастер Пол" class="logo-img">
+            </div>
+            <nav>
+                <ul class="nav">
+                    {% if current_user.is_authenticated %}
+                        <li><span>Привет, {{ current_user.username }} ({{ current_user.role }})!</span></li>
+                        <li><a href="/logout">Выйти</a></li>
+                    {% else %}
+                        <li><a href="/login">Вход</a></li>
+                        <li><a href="/register">Регистрация</a></li>
+                    {% endif %}
+                    <li><a href="/partners">Партнёры</a></li>
+                    {% if current_user.is_authenticated and current_user.role == 'manager' %}
+                        <li><a href="#" data-bs-toggle="modal" data-bs-target="#addPartnerModal">Добавить партнёра</a></li>
+                    {% endif %}
+                    <li><a href="/requests">Заявки</a></li>
+                    {% if current_user.is_authenticated and current_user.role == 'manager' %}
+                        <li><a href="/add_request">Добавить заявку</a></li>
+                    {% endif %}
+                    <li><a href="/supplies">Поставки</a></li>
+                    <li><a href="/materials">Материалы</a></li>
+                    <li><a href="/products">Продукция</a></li>
+                    {% if current_user.is_authenticated and current_user.role == 'manager' %}
+                        <li><a href="/upload" class="active">Импорт CSV</a></li>
+                    {% endif %}
+                    <li><a href="/calc">Расчёт</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="dashboard">
+            <h1>Импорт списка партнёров</h1>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ 'alert-success' if category == 'success' else 'alert-danger' }}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <p>Загрузите CSV-файл с данными партнёров. Файл должен содержать столбцы:</p>
+            <ul>
+                <li><strong>Name</strong> (обязательно) – наименование партнёра</li>
+                <li><strong>LegalAddress</strong> – юридический адрес</li>
+                <li><strong>INN</strong> (обязательно) – ИНН (10 или 12 цифр)</li>
+                <li><strong>DirectorFullName</strong> – ФИО директора</li>
+                <li><strong>Phone</strong> – телефон (10–15 цифр, опционально с "+")</li>
+                <li><strong>Email</strong> – email</li>
+                <li><strong>Rating</strong> – рейтинг (0–5, с шагом 0.1)</li>
+            </ul>
+            <p>Пример CSV:</p>
+            <pre>
+Name,LegalAddress,INN,DirectorFullName,Phone,Email,Rating
+ООО Паркет-Люкс,г. Москва, ул. Лесная, д. 5,772345678901,Иванов Сергей Петрович,+7 (495) 111-22-33,info@parketlux.ru,4.5
+ИП Гусев С.В.,г. Воронеж, пр. Революции, д. 56,366789012345,Гусев Сергей Владимирович,+7 (473) 555-88-00,gusev@floorstore.ru,3.7
+            </pre>
+
+            <form method="POST" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="csv_file" class="form-label">Выберите CSV-файл</label>
+                    <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
+                </div>
+                <button type="submit" class="btn btn-accent">Загрузить</button>
+            </form>
+
+            <a href="/partners" class="btn btn-secondary mt-3">Назад к партнёрам</a>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>© 2025 Мастер Пол. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

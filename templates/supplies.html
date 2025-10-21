@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поставки | Мастер Пол</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="icon" href="/static/images/logo.png">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <img src="/static/images/logo.png" alt="Мастер Пол" class="logo-img">
+            </div>
+            <nav>
+                <ul class="nav">
+                    {% if current_user.is_authenticated %}
+                        <li><span>Привет, {{ current_user.username }} ({{ current_user.role }})!</span></li>
+                        <li><a href="/logout">Выйти</a></li>
+                    {% else %}
+                        <li><a href="/login">Вход</a></li>
+                        <li><a href="/register">Регистрация</a></li>
+                    {% endif %}
+                    {% if current_user.is_authenticated and current_user.role in ['manager', 'analyst'] %}
+                        <li><a href="/partners">Партнёры</a></li>
+                        {% if current_user.role == 'manager' %}
+                            <li><a href="#" data-bs-toggle="modal" data-bs-target="#addPartnerModal">Добавить партнёра</a></li>
+                        {% endif %}
+                    {% endif %}
+                    <li><a href="/requests">Заявки</a></li>
+                    {% if current_user.is_authenticated and current_user.role == 'manager' %}
+                        <li><a href="/add_request">Добавить заявку</a></li>
+                    {% endif %}
+                    {% if current_user.is_authenticated and current_user.role == 'partner' %}
+                        <li><a href="/my_requests">Мои заявки</a></li>
+                    {% endif %}
+                    <li><a href="/supplies" class="active">Поставки</a></li>
+                    <li><a href="/materials">Материалы</a></li>
+                    <li><a href="/products">Продукция</a></li>
+                    {% if current_user.is_authenticated and current_user.role == 'manager' %}
+                        <li><a href="/upload">Импорт CSV</a></li>
+                    {% endif %}
+                    <li><a href="/calc">Расчёт</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="dashboard">
+            <h1>Поставки продукции</h1>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ 'alert-success' if category == 'success' else 'alert-danger' }}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if current_user.is_authenticated and current_user.role == 'manager' %}
+            <!-- Форма добавления поставки -->
+            <div class="modal fade" id="addSupplyModal" tabindex="-1" aria-labelledby="addSupplyModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addSupplyModalLabel">Добавить поставку</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="POST" action="/supplies">
+                                <div class="mb-3">
+                                    <label for="supplier_id" class="form-label">Поставщик</label>
+                                    <select class="form-control" id="supplier_id" name="supplier_id" required>
+                                        <option value="">Выберите поставщика</option>
+                                        {% for supplier in suppliers %}
+                                            <option value="{{ supplier[0] }}">{{ supplier[1] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="material_id" class="form-label">Материал</label>
+                                    <select class="form-control" id="material_id" name="material_id" required>
+                                        <option value="">Выберите материал</option>
+                                        {% for material in materials %}
+                                            <option value="{{ material[0] }}">{{ material[1] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="manager_id" class="form-label">Менеджер</label>
+                                    <select class="form-control" id="manager_id" name="manager_id" required>
+                                        <option value="">Выберите менеджера</option>
+                                        {% for manager in managers %}
+                                            <option value="{{ manager[0] }}">{{ manager[1] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="quantity" class="form-label">Количество</label>
+                                    <input type="number" class="form-control" id="quantity" name="quantity" min="0.01" step="0.01" required>
+                                </div>
+                                <button type="submit" class="btn btn-accent">Добавить</button>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-accent mb-3" data-bs-toggle="modal" data-bs-target="#addSupplyModal">Добавить поставку</button>
+            {% endif %}
+
+            <!-- Таблица поставок -->
+            {% if supplies %}
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Поставщик</th>
+                        <th>Материал</th>
+                        <th>Менеджер</th>
+                        <th>Количество</th>
+                        <th>Дата поставки</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for supply in supplies %}
+                    <tr>
+                        <td>{{ supply[0] }}</td>
+                        <td>{{ supply[1] }}</td>
+                        <td>{{ supply[2] }}</td>
+                        <td>{{ supply[3] }}</td>
+                        <td>{{ supply[4] }}</td>
+                        <td>{{ supply[5] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted">Поставки не найдены. Проверьте данные в таблице Supplies.</p>
+            {% endif %}
+
+            <a href="/" class="btn btn-secondary">Назад</a>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>© 2025 Мастер Пол. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

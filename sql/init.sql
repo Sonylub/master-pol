@@ -132,3 +132,13 @@ BEGIN
     RETURN CEILING(v_material_needed);
 END;
 $$;
+
+
+-- Добавление столбца PartnerID в таблицу Users
+ALTER TABLE Users ADD COLUMN PartnerID INTEGER REFERENCES Partners(PartnerID);
+
+-- Пример: Связываем пользователя с ролью partner (UserID=3) с партнёром (PartnerID=1)
+UPDATE Users SET PartnerID = 1 WHERE UserID = 3 AND Role = 'partner';
+
+-- Проверяем структуру таблицы Users
+SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'users';

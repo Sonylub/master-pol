@@ -114,3 +114,58 @@ footer {
     padding: 10px 0;
     margin-top: 30px;
 }
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #FFFFFF;
+    color: #000000;
+}
+.btn-accent {
+    background-color: #67BA80;
+    color: #FFFFFF;
+}
+.btn-accent:hover {
+    background-color: #5aa36f;
+}
+.btn-secondary {
+    background-color: #F4E8D3;
+    color: #000000;
+}
+.btn-secondary:hover {
+    background-color: #e0d4c3;
+}
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.table th, .table td {
+    border: 1px solid #F4E8D3;
+    padding: 8px;
+    text-align: left;
+}
+.alert {
+    margin-bottom: 20px;
+}
+.modal-content {
+    background-color: #FFFFFF;
+    color: #000000;
+}
+.modal-header, .modal-footer {
+    border-color: #F4E8D3;
+}
+.delete-icon, .view-icon {
+    cursor: pointer;
+    margin-right: 10px;
+}
+.delete-icon {
+    color: #dc3545;
+}
+.delete-icon:hover {
+    color: #a71d2a;
+}
+.view-icon {
+    color: #67BA80;
+}
+.view-icon:hover {
+    color: #5aa36f;
+}
