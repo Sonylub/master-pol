@@ -19,26 +19,28 @@
 
 ## Файловая структура
 ```
-MasterPol/
-├── app.py                # Flask-приложение
-├── requirements.txt      # Зависимости
-├── templates/            # HTML-шаблоны
-│   ├── partners.html    # Таблица партнёров
-│   ├── add_partner.html # Форма партнёра
-│   ├── requests.html    # Таблица заявок
-│   ├── add_request.html # Форма заявки
-│   ├── supplies.html    # Таблица поставок
-│   ├── materials.html   # Таблица материалов
-│   ├── products.html    # Таблица продукции
-│   ├── upload.html      # Импорт CSV
-│   └── calc.html        # Расчёт материалов
-├── static/               # Статические файлы
-│   ├── styles.css    # Стили (Segoe UI, #FFFFFF/#F4E8D3/#67BA80)
-│   ├── images/logo.png  # Логотип
-│   └── uploads/         # CSV-файлы
-├── sql/
-│   └── init.sql         # SQL-скрипт (таблицы, функции)
-├── docs/
-│   └── README.md        # Документация
-└── setup.py             # Скрипт PyInstaller
+master-pol/
+├── .venv/
+├── app.py
+├── requirements.txt
+├── vercel.json
+├── templates/
+│   ├── index.html
+│   ├── partners.html
+│   ├── error.html
+│   ├── add_partner.html
+│   ├── add_request.html
+│   ├── calc.html
+│   ├── materials.html
+│   ├── products.html
+│   ├── requests.html
+│   ├── supplies.html
+│   ├── upload.html
+├── static/
+│   ├── css/styles.css
+│   ├── images/logo.png
+│   └── uploads/
+├── sql/init.sql
+├── docs/README.md
+└── setup.py
 ```

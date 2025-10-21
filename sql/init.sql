@@ -1,134 +1,134 @@
--- Использование базы
-USE PartnerManagement_01_MasterPol;;
-GO
+-- Создание таблицы Users (для аутентификации)
+CREATE TABLE IF NOT EXISTS Users (
+    UserID SERIAL PRIMARY KEY,
+    Username VARCHAR(50) UNIQUE NOT NULL,
+    Password VARCHAR(255) NOT NULL,
+    Email VARCHAR(100) UNIQUE,
+    Role VARCHAR(20) NOT NULL DEFAULT 'partner',
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
--- Создание таблиц
-CREATE TABLE Partners (
-    PartnerID INT IDENTITY(1,1) PRIMARY KEY,
-    Name NVARCHAR(150) NOT NULL,
-    LegalAddress NVARCHAR(250),
-    INN NVARCHAR(12),
-    DirectorFullName NVARCHAR(150),
-    Phone NVARCHAR(20),
-    Email NVARCHAR(100),
+-- Создание таблиц (адаптировано для PostgreSQL)
+CREATE TABLE IF NOT EXISTS Partners (
+    PartnerID SERIAL PRIMARY KEY,
+    Name VARCHAR(150) NOT NULL,
+    LegalAddress VARCHAR(250),
+    INN VARCHAR(12),
+    DirectorFullName VARCHAR(150),
+    Phone VARCHAR(20),
+    Email VARCHAR(100),
     Rating DECIMAL(3,2),
-    CreatedAt DATETIME DEFAULT GETDATE()
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-GO
 
-CREATE TABLE Managers (
-    ManagerID INT IDENTITY(1,1) PRIMARY KEY,
-    FullName NVARCHAR(150) NOT NULL,
-    Phone NVARCHAR(20),
-    Email NVARCHAR(100)
+CREATE TABLE IF NOT EXISTS Managers (
+    ManagerID SERIAL PRIMARY KEY,
+    FullName VARCHAR(150) NOT NULL,
+    Phone VARCHAR(20),
+    Email VARCHAR(100)
 );
-GO
 
-CREATE TABLE Suppliers (
-    SupplierID INT IDENTITY(1,1) PRIMARY KEY,
-    Name NVARCHAR(150) NOT NULL,
-    INN NVARCHAR(12),
-    Phone NVARCHAR(20),
-    Email NVARCHAR(100)
+CREATE TABLE IF NOT EXISTS Suppliers (
+    SupplierID SERIAL PRIMARY KEY,
+    Name VARCHAR(150) NOT NULL,
+    INN VARCHAR(12),
+    Phone VARCHAR(20),
+    Email VARCHAR(100)
 );
-GO
 
-CREATE TABLE Materials (
-    MaterialID INT IDENTITY(1,1) PRIMARY KEY,
-    Name NVARCHAR(150) NOT NULL,
-    Unit NVARCHAR(20),
-    Cost MONEY,
+CREATE TABLE IF NOT EXISTS Materials (
+    MaterialID SERIAL PRIMARY KEY,
+    Name VARCHAR(150) NOT NULL,
+    Unit VARCHAR(20),
+    Cost DECIMAL(10,2),
     QuantityInStock DECIMAL(10,2) DEFAULT 0,
     MinAllowedQuantity DECIMAL(10,2) DEFAULT 0
 );
-GO
 
-CREATE TABLE Supplies (
-    SupplyID INT IDENTITY(1,1) PRIMARY KEY,
-    SupplierID INT NOT NULL,
-    MaterialID INT NOT NULL,
-    ManagerID INT NOT NULL,
+CREATE TABLE IF NOT EXISTS Supplies (
+    SupplyID SERIAL PRIMARY KEY,
+    SupplierID INTEGER NOT NULL REFERENCES Suppliers(SupplierID),
+    MaterialID INTEGER NOT NULL REFERENCES Materials(MaterialID),
+    ManagerID INTEGER NOT NULL REFERENCES Managers(ManagerID),
     Quantity DECIMAL(10,2) CHECK (Quantity > 0),
-    SupplyDate DATETIME DEFAULT GETDATE(),
-    CONSTRAINT FK_Supplies_Suppliers FOREIGN KEY (SupplierID) REFERENCES Suppliers(SupplierID),
-    CONSTRAINT FK_Supplies_Materials FOREIGN KEY (MaterialID) REFERENCES Materials(MaterialID),
-    CONSTRAINT FK_Supplies_Managers FOREIGN KEY (ManagerID) REFERENCES Managers(ManagerID)
+    SupplyDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-GO
 
-CREATE TABLE Products (
-    ProductID INT IDENTITY(1,1) PRIMARY KEY,
-    Name NVARCHAR(150) NOT NULL,
-    Description NVARCHAR(255),
-    StandardNumber NVARCHAR(50),
-    ManufactureTimeDays INT,
-    CostPrice MONEY,
-    MinPartnerPrice MONEY,
-    CreatedAt DATETIME DEFAULT GETDATE()
+CREATE TABLE IF NOT EXISTS Products (
+    ProductID SERIAL PRIMARY KEY,
+    Name VARCHAR(150) NOT NULL,
+    Description VARCHAR(255),
+    StandardNumber VARCHAR(50),
+    ManufactureTimeDays INTEGER,
+    CostPrice DECIMAL(10,2),
+    MinPartnerPrice DECIMAL(10,2),
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-GO
 
-CREATE TABLE ProductComposition (
-    ProductCompositionID INT IDENTITY(1,1) PRIMARY KEY,
-    ProductID INT NOT NULL,
-    MaterialID INT NOT NULL,
-    Quantity DECIMAL(10,2) CHECK (Quantity > 0),
-    CONSTRAINT FK_ProductComposition_Products FOREIGN KEY (ProductID) REFERENCES Products(ProductID),
-    CONSTRAINT FK_ProductComposition_Materials FOREIGN KEY (MaterialID) REFERENCES Materials(MaterialID)
+CREATE TABLE IF NOT EXISTS ProductComposition (
+    ProductCompositionID SERIAL PRIMARY KEY,
+    ProductID INTEGER NOT NULL REFERENCES Products(ProductID),
+    MaterialID INTEGER NOT NULL REFERENCES Materials(MaterialID),
+    Quantity DECIMAL(10,2) CHECK (Quantity > 0)
 );
-GO
 
-CREATE TABLE Requests (
-    RequestID INT IDENTITY(1,1) PRIMARY KEY,
-    PartnerID INT NOT NULL,
-    ManagerID INT NOT NULL,
-    ProductID INT NOT NULL,
-    Quantity INT CHECK (Quantity > 0),
-    UnitPrice MONEY CHECK (UnitPrice > 0),
-    TotalPrice AS (Quantity * UnitPrice) PERSISTED,
-    CreatedAt DATETIME DEFAULT GETDATE(),
-    Status NVARCHAR(50) DEFAULT N'Новая',
-    CONSTRAINT FK_Requests_Partners FOREIGN KEY (PartnerID) REFERENCES Partners(PartnerID),
-    CONSTRAINT FK_Requests_Managers FOREIGN KEY (ManagerID) REFERENCES Managers(ManagerID),
-    CONSTRAINT FK_Requests_Products FOREIGN KEY (ProductID) REFERENCES Products(ProductID)
+CREATE TABLE IF NOT EXISTS Requests (
+    RequestID SERIAL PRIMARY KEY,
+    PartnerID INTEGER NOT NULL REFERENCES Partners(PartnerID),
+    ManagerID INTEGER NOT NULL REFERENCES Managers(ManagerID),
+    ProductID INTEGER NOT NULL REFERENCES Products(ProductID),
+    Quantity INTEGER CHECK (Quantity > 0),
+    UnitPrice DECIMAL(10,2) CHECK (UnitPrice > 0),
+    TotalPrice DECIMAL(10,2) GENERATED ALWAYS AS (Quantity * UnitPrice) STORED,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Status VARCHAR(50) DEFAULT 'Новая'
 );
-GO
 
--- Функция расчёта скидки
-CREATE FUNCTION fn_GetPartnerDiscount (@PartnerID INT)
+-- Функция расчёта скидки (адаптирована для PostgreSQL)
+CREATE OR REPLACE FUNCTION fn_GetPartnerDiscount(p_partnerid INTEGER)
 RETURNS DECIMAL(5,2)
-AS
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_total_quantity INTEGER;
 BEGIN
-    DECLARE @TotalQuantity INT;
-    SELECT @TotalQuantity = ISNULL(SUM(Quantity), 0)
+    SELECT COALESCE(SUM(Quantity), 0)
+    INTO v_total_quantity
     FROM Requests
-    WHERE PartnerID = @PartnerID AND Status = N'Выполнена';
+    WHERE PartnerID = p_partnerid AND Status = 'Выполнена';
+    
     RETURN CASE
-        WHEN @TotalQuantity >= 1000 THEN 0.15
-        WHEN @TotalQuantity >= 500 THEN 0.10
+        WHEN v_total_quantity >= 1000 THEN 0.15
+        WHEN v_total_quantity >= 500 THEN 0.10
         ELSE 0.05
     END;
 END;
-GO
+$$;
 
--- Функция расчёта материалов
-CREATE FUNCTION fn_CalcRequiredMaterial (
-    @ProductTypeID INT,
-    @MaterialID INT,
-    @Quantity INT,
-    @Param1 FLOAT,
-    @Param2 FLOAT
+-- Функция расчёта материалов (адаптирована для PostgreSQL)
+CREATE OR REPLACE FUNCTION fn_CalcRequiredMaterial(
+    p_producttypeid INTEGER,
+    p_materialid INTEGER,
+    p_quantity INTEGER,
+    p_param1 FLOAT,
+    p_param2 FLOAT
 )
-RETURNS INT
-AS
+RETURNS INTEGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_defect_rate FLOAT := 0.1; -- 10% брака
+    v_material_needed DECIMAL(10,2);
 BEGIN
-    DECLARE @DefectRate FLOAT = 0.1; -- 10% брака
-    IF @ProductTypeID <= 0 OR @MaterialID <= 0 OR @Quantity <= 0 OR @Param1 <= 0 OR @Param2 <= 0
+    IF p_producttypeid <= 0 OR p_materialid <= 0 OR p_quantity <= 0 OR p_param1 <= 0 OR p_param2 <= 0 THEN
         RETURN -1;
-    DECLARE @MaterialNeeded DECIMAL(10,2);
-    SELECT @MaterialNeeded = ISNULL(SUM(pc.Quantity * @Quantity * @Param1 * @Param2 * (1 + @DefectRate)), 0)
+    END IF;
+    
+    SELECT COALESCE(SUM(pc.Quantity * p_quantity * p_param1 * p_param2 * (1 + v_defect_rate)), 0)
+    INTO v_material_needed
     FROM ProductComposition pc
-    WHERE pc.ProductID = @ProductTypeID AND pc.MaterialID = @MaterialID;
-    RETURN CEILING(@MaterialNeeded);
+    WHERE pc.ProductID = p_producttypeid AND pc.MaterialID = p_materialid;
+    
+    RETURN CEILING(v_material_needed);
 END;
-GO
+$$;
