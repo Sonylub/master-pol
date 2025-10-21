@@ -14,6 +14,7 @@
             <div class="logo">
                 <img src="/static/images/logo.png" alt="Мастер Пол" class="logo-img">
             </div>
+            <button class="nav-toggle" aria-label="Toggle navigation">☰</button>
             <nav>
                 <ul class="nav">
                     {% if current_user.is_authenticated %}
@@ -25,11 +26,14 @@
                     {% endif %}
                     <li><a href="/partners">Партнёры</a></li>
                     {% if current_user.is_authenticated and current_user.role == 'manager' %}
-                        <li><a href="/add_partner">Добавить партнёра</a></li>
+                        <li><a href="#" data-bs-toggle="modal" data-bs-target="#addPartnerModal">Добавить партнёра</a></li>
                     {% endif %}
                     <li><a href="/requests">Заявки</a></li>
                     {% if current_user.is_authenticated and current_user.role == 'manager' %}
                         <li><a href="/add_request">Добавить заявку</a></li>
+                    {% endif %}
+                    {% if current_user.is_authenticated and current_user.role == 'partner' %}
+                        <li><a href="/my_requests">Мои заявки</a></li>
                     {% endif %}
                     <li><a href="/supplies">Поставки</a></li>
                     <li><a href="/materials">Материалы</a></li>
@@ -61,7 +65,7 @@
                 <div class="card">
                     <h2>Добавить партнёра</h2>
                     <p>Создание нового партнёра</p>
-                    <a href="/add_partner" class="btn btn-accent">Перейти</a>
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#addPartnerModal" class="btn btn-accent">Перейти</a>
                 </div>
                 {% endif %}
                 <div class="card">
@@ -112,5 +116,8 @@
             <p>© 2025 Мастер Пол. Все права защищены.</p>
         </div>
     </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/scripts.js"></script>
 </body>
 </html>
