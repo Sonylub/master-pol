@@ -142,3 +142,66 @@ UPDATE Users SET PartnerID = 1 WHERE UserID = 3 AND Role = 'partner';
 
 -- Проверяем структуру таблицы Users
 SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'users';
+
+CREATE OR REPLACE FUNCTION fn_GetPartnerDiscountNew(partner_id INTEGER)
+RETURNS NUMERIC AS $$
+DECLARE
+    total_volume NUMERIC;
+BEGIN
+    -- Суммируем TotalPrice всех заявок для партнёра
+    SELECT COALESCE(SUM(TotalPrice), 0)
+    INTO total_volume
+    FROM Requests
+    WHERE PartnerID = partner_id;
+
+    -- Расчёт скидки по блок-схеме
+    IF total_volume < 10000 THEN
+        RETURN 0;
+    ELSIF total_volume < 50000 THEN
+        RETURN 0.05;
+    ELSIF total_volume < 300000 THEN
+        RETURN 0.10;
+    ELSE
+        RETURN 0.15;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+UPDATE Products
+SET Name = 'Паркетная доска', Description = 'Паркетная доска высокого качества'
+WHERE ProductID = 1;
+
+CREATE OR REPLACE FUNCTION fn_CalcRequiredMaterial(
+    p_product_id INTEGER,
+    p_material_id INTEGER,
+    p_quantity INTEGER,
+    p_param1 FLOAT,
+    p_param2 FLOAT
+)
+RETURNS DECIMAL(10,2)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_material_quantity DECIMAL(10,2);
+    v_total_required DECIMAL(10,2);
+BEGIN
+    -- Проверка входных параметров
+    IF p_product_id <= 0 OR p_material_id <= 0 OR p_quantity <= 0 OR p_param1 < 0 OR p_param2 < 0 THEN
+        RAISE EXCEPTION 'Неверные входные параметры: ProductID=%, MaterialID=%, Quantity=%, Param1=%, Param2=%', 
+            p_product_id, p_material_id, p_quantity, p_param1, p_param2;
+    END IF;
+
+    -- Получение количества материала из ProductComposition
+    SELECT Quantity INTO v_material_quantity
+    FROM ProductComposition
+    WHERE ProductID = p_product_id AND MaterialID = p_material_id;
+
+    IF v_material_quantity IS NULL THEN
+        RAISE EXCEPTION 'Связь между продуктом % и материалом % не найдена', p_product_id, p_material_id;
+    END IF;
+
+    -- Расчёт: Quantity * p_quantity * (1 + p_param1 * p_param2)
+    v_total_required := v_material_quantity * p_quantity * (1 + p_param1 * p_param2);
+    RETURN v_total_required;
+END;
+$$;

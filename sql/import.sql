@@ -63,3 +63,52 @@ INSERT INTO Requests (PartnerID, ManagerID, ProductID, Quantity, UnitPrice, Stat
 (1, 1, 1, 50, 1300.00, 'Новая'),
 (2, 2, 2, 30, 2500.00, 'Выполнена')
 ON CONFLICT DO NOTHING;
+
+-- Добавляем партнёра
+INSERT INTO Partners (PartnerID, Name, INN) VALUES (1, 'ООО СтройМат', '123456789012') ON CONFLICT DO NOTHING;
+
+-- Добавляем менеджера
+INSERT INTO Managers (ManagerID, FullName) VALUES (1, 'Петров Иван Александрович') ON CONFLICT DO NOTHING;
+
+-- Добавляем продукт
+INSERT INTO Products (ProductID, Name, MinPartnerPrice) VALUES (1, 'Паркетная доска', 1300.00) ON CONFLICT DO NOTHING;
+
+-- Добавляем пользователя-партнёра
+INSERT INTO Users (Username, Email, Password, Role, PartnerID) 
+VALUES ('partner1', 'partner@example.com', '$2b$12$hashed_password', 'partner', 1) ON CONFLICT DO NOTHING;
+
+-- Добавляем пользователя-менеджера
+INSERT INTO Users (Username, Email, Password, Role) 
+VALUES ('manager1', 'manager@example.com', '$2b$12$hashed_password', 'manager') ON CONFLICT DO NOTHING;
+
+-- Добавляем выполненную заявку для партнёра
+INSERT INTO Requests (PartnerID, ManagerID, ProductID, Quantity, UnitPrice, Status) 
+VALUES (1, 1, 1, 10, 1500.00, 'Выполнена') ON CONFLICT DO NOTHING;
+
+-- Проверяем данные
+SELECT * FROM Requests WHERE PartnerID = 1 AND Status = 'Выполнена';
+
+-- Привязываем aboba123 к PartnerID=3
+UPDATE Users SET PartnerID = 3 WHERE UserID = 6 AND Username = 'aboba123';
+
+-- Проверяем обновление
+SELECT * FROM Users WHERE Username = 'aboba123';
+
+-- Добавляем продукт (если ещё не добавлен)
+INSERT INTO Products (ProductID, Name, MinPartnerPrice)
+VALUES (1, 'Паркетная доска', 1300.00)
+ON CONFLICT (ProductID) DO NOTHING;
+
+-- Добавляем менеджера (если ещё не добавлен)
+INSERT INTO Managers (ManagerID, FullName)
+VALUES (1, 'Петров Иван Александрович')
+ON CONFLICT (ManagerID) DO NOTHING;
+
+-- Добавляем выполненную заявку для PartnerID=3
+INSERT INTO Requests (RequestID, PartnerID, ManagerID, ProductID, Quantity, UnitPrice, Status, CreatedAt)
+VALUES (3, 3, 1, 1, 10, 1500.00, 'Выполнена', '2025-10-22 10:04:06.914423')
+ON CONFLICT (RequestID) DO NOTHING;
+
+-- Проверяем заявку
+SELECT * FROM Requests WHERE PartnerID = 3 AND Status = 'Выполнена';
+

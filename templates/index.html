@@ -3,110 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Работа с партнёрами | Мастер Пол</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/static/css/styles.css">
+    <title>Мастер Пол | Главная</title>
     <link rel="icon" href="/static/images/logo.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
     <header>
-        <div class="container">
-            <div class="logo">
-                <img src="/static/images/logo.png" alt="Мастер Пол" class="logo-img">
+        <div class="container header-container">
+            <div class="logo-block">
+                <img src="/static/images/logo.png" alt="Логотип Мастер Пол" class="logo-img">
+                <h1 class="app-title">Мастер Пол — Производственная компания</h1>
             </div>
-            <button class="nav-toggle" aria-label="Toggle navigation">☰</button>
+            <button class="nav-toggle" aria-label="Переключить меню">
+                <span class="hamburger"></span>
+            </button>
             <nav>
                 <ul class="nav">
                     {% if current_user.is_authenticated %}
-                        <li><span>Привет, {{ current_user.username }} ({{ current_user.role }})!</span></li>
-                        <li><a href="/logout">Выйти</a></li>
+                        <li><span class="user-info">Привет, {{ current_user.username }} ({{ current_user.role }})!</span></li>
+                        <li><a href="/logout"><i class="fas fa-sign-out-alt"></i> Выйти</a></li>
+                        {% if current_user.role == 'manager' %}
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-users"></i> Партнёры <i class="fas fa-caret-down"></i>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/partners">Список партнёров</a></li>
+                                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addPartnerModal">Добавить партнёра</a></li>
+                                    <li><a class="dropdown-item" href="/upload">Импорт CSV</a></li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user"></i> Пользователи <i class="fas fa-caret-down"></i>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/users">Список пользователей</a></li>
+                                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addUserModal">Добавить пользователя</a></li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-file-alt"></i> Заявки <i class="fas fa-caret-down"></i>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/requests">Все заявки</a></li>
+                                    <li><a class="dropdown-item" href="/add_request">Добавить заявку</a></li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-warehouse"></i> Склад и материалы <i class="fas fa-caret-down"></i>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/supplies">Поставки</a></li>
+                                    <li><a class="dropdown-item" href="/materials">Материалы</a></li>
+                                    <li><a class="dropdown-item" href="/products">Продукция</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="/calc"><i class="fas fa-calculator"></i> Расчёт</a></li>
+                        {% elif current_user.role == 'partner' %}
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-file-alt"></i> Заявки <i class="fas fa-caret-down"></i>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/my_requests">История реализации</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="/products"><i class="fas fa-box"></i> Продукция</a></li>
+                        {% endif %}
                     {% else %}
-                        <li><a href="/login">Вход</a></li>
-                        <li><a href="/register">Регистрация</a></li>
+                        <li><a href="/login"><i class="fas fa-sign-in-alt"></i> Вход</a></li>
+                        <li><a href="/register"><i class="fas fa-user-plus"></i> Регистрация</a></li>
                     {% endif %}
-                    <li><a href="/partners">Партнёры</a></li>
-                    {% if current_user.is_authenticated and current_user.role == 'manager' %}
-                        <li><a href="#" data-bs-toggle="modal" data-bs-target="#addPartnerModal">Добавить партнёра</a></li>
-                    {% endif %}
-                    <li><a href="/requests">Заявки</a></li>
-                    {% if current_user.is_authenticated and current_user.role == 'manager' %}
-                        <li><a href="/add_request">Добавить заявку</a></li>
-                    {% endif %}
-                    {% if current_user.is_authenticated and current_user.role == 'partner' %}
-                        <li><a href="/my_requests">Мои заявки</a></li>
-                    {% endif %}
-                    <li><a href="/supplies">Поставки</a></li>
-                    <li><a href="/materials">Материалы</a></li>
-                    <li><a href="/products">Продукция</a></li>
-                    {% if current_user.is_authenticated and current_user.role == 'manager' %}
-                        <li><a href="/upload">Импорт CSV</a></li>
-                    {% endif %}
-                    <li><a href="/calc">Расчёт</a></li>
                 </ul>
             </nav>
         </div>
     </header>
 
     <main class="container">
-        <section class="dashboard">
-            <h1>Работа с партнёрами</h1>
+        <section class="intro-section my-5">
+            <h2 class="section-title">О компании «Мастер Пол»</h2>
+            <p class="lead">
+                «Мастер Пол» — производственная компания, специализирующаяся на создании высококачественных напольных покрытий. 
+                Мы сотрудничаем с партнёрами по всей России, обеспечивая гибкие условия, прозрачные расчёты и высокие стандарты качества.
+            </p>
+            <div class="row align-items-center mt-4">
+                <div class="col-12 col-md-6">
+                    <p>
+                        Наша миссия — предоставлять эстетичные, долговечные решения для любых помещений. 
+                        Мы внедряем современные технологии и автоматизированные процессы управления.
+                    </p>
+                    <ul>
+                        <li><strong>Продукция:</strong> Сертифицированные покрытия для любого интерьера.</li>
+                        <li><strong>Партнёры:</strong> Система скидок, рейтингов и аналитики.</li>
+                        <li><strong>Производство:</strong> Контроль этапов и качества материалов.</li>
+                    </ul>
+                </div>
+                <div class="col-12 col-md-6 text-center">
+                    <img src="/static/images/flooring_sample.jpg" alt="Пример напольного покрытия" class="img-fluid rounded shadow-sm">
+                    <p class="text-muted mt-2">Пример напольного покрытия (замените на реальное изображение).</p>
+                </div>
+            </div>
+            <div class="row align-items-center mt-4">
+                <div class="col-12 col-md-6 order-md-2">
+                    <p>
+                        Наше производство оснащено современным оборудованием, а мастера контролируют каждый этап — от заказа 
+                        материалов у поставщиков до выпуска готовой продукции. Мы обеспечиваем своевременную доставку партнёрам.
+                    </p>
+                    <ul>
+                        <li><strong>Склад:</strong> Учёт поступлений и резервирования материалов.</li>
+                        <li><strong>Менеджеры:</strong> Приём заявок и формирование предложений.</li>
+                        <li><strong>Аналитика:</strong> Статистика продаж и качества материалов.</li>
+                    </ul>
+                </div>
+                <div class="col-12 col-md-6 order-md-1 text-center">
+                    <img src="/static/images/production_process.jpg" alt="Производственный процесс" class="img-fluid rounded shadow-sm">
+                    <p class="text-muted mt-2">Производственный процесс (замените на реальное изображение).</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="dashboard my-5">
+            <h2 class="section-title">Функционал системы</h2>
             {% if db_status %}
-            <div class="alert {{ 'alert-success' if db_status.status == 'success' else 'alert-danger' }}" role="alert">
+            <div class="alert {{ 'alert-success' if db_status.status == 'success' else 'alert-danger' }}">
                 {{ db_status.message }}
             </div>
             {% endif %}
             <div class="cards">
-                <div class="card">
-                    <h2>Партнёры</h2>
-                    <p>Управление контактами, рейтингами, историей продаж</p>
-                    <a href="/partners" class="btn btn-accent">Перейти</a>
-                </div>
-                {% if current_user.is_authenticated and current_user.role == 'manager' %}
-                <div class="card">
-                    <h2>Добавить партнёра</h2>
-                    <p>Создание нового партнёра</p>
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#addPartnerModal" class="btn btn-accent">Перейти</a>
-                </div>
+                {% if current_user.role == 'manager' %}
+                    <div class="card">
+                        <h3><i class="fas fa-user"></i> Пользователи</h3>
+                        <p>Управление пользователями системы</p>
+                        <a href="/users" class="btn-accent">Перейти</a>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-users"></i> Партнёры</h3>
+                        <p>Управление контактами, рейтингами, историей продаж</p>
+                        <a href="/partners" class="btn-accent">Перейти</a>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-user-plus"></i> Добавить партнёра</h3>
+                        <p>Создание новой карточки партнёра</p>
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#addPartnerModal" class="btn-accent">Перейти</a>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-file-alt"></i> Заявки</h3>
+                        <p>Работа с заказами и скидками</p>
+                        <a href="/requests" class="btn-accent">Перейти</a>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-truck"></i> Поставки</h3>
+                        <p>Учёт материалов и остатков</p>
+                        <a href="/supplies" class="btn-accent">Перейти</a>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-box"></i> Продукция</h3>
+                        <p>Список и учёт продукции</p>
+                        <a href="/products" class="btn-accent">Перейти</a>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-calculator"></i> Расчёт</h3>
+                        <p>Автоматизация расчёта материалов</p>
+                        <a href="/calc" class="btn-accent">Перейти</a>
+                    </div>
+                {% elif current_user.role == 'partner' %}
+                    <div class="card">
+                        <h3><i class="fas fa-file-alt"></i> История реализации</h3>
+                        <p>Просмотр выполненных заявок</p>
+                        <a href="/my_requests" class="btn-accent">Перейти</a>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-box"></i> Продукция</h3>
+                        <p>Каталог напольных покрытий</p>
+                        <a href="/products" class="btn-accent">Перейти</a>
+                    </div>
                 {% endif %}
-                <div class="card">
-                    <h2>Заявки</h2>
-                    <p>Обработка заказов, расчёт скидок и статусов</p>
-                    <a href="/requests" class="btn btn-accent">Перейти</a>
-                </div>
-                {% if current_user.is_authenticated and current_user.role == 'manager' %}
-                <div class="card">
-                    <h2>Добавить заявку</h2>
-                    <p>Создание новой заявки</p>
-                    <a href="/add_request" class="btn btn-accent">Перейти</a>
-                </div>
-                {% endif %}
-                <div class="card">
-                    <h2>Поставки</h2>
-                    <p>Учёт материалов и продукции, остатки</p>
-                    <a href="/supplies" class="btn btn-accent">Перейти</a>
-                </div>
-                <div class="card">
-                    <h2>Материалы</h2>
-                    <p>Управление материалами</p>
-                    <a href="/materials" class="btn btn-accent">Перейти</a>
-                </div>
-                <div class="card">
-                    <h2>Продукция</h2>
-                    <p>Управление продукцией</p>
-                    <a href="/products" class="btn btn-accent">Перейти</a>
-                </div>
-                {% if current_user.is_authenticated and current_user.role == 'manager' %}
-                <div class="card">
-                    <h2>Импорт CSV</h2>
-                    <p>Загрузка данных о партнёрах и товарах</p>
-                    <a href="/upload" class="btn btn-accent">Перейти</a>
-                </div>
-                {% endif %}
-                <div class="card">
-                    <h2>Расчёт</h2>
-                    <p>Расчёт материалов и продукции</p>
-                    <a href="/calc" class="btn btn-accent">Перейти</a>
-                </div>
             </div>
         </section>
     </main>
@@ -117,7 +193,117 @@
         </div>
     </footer>
 
+    {% if current_user.is_authenticated and current_user.role == 'manager' %}
+    <div class="modal fade" id="addPartnerModal" tabindex="-1" aria-labelledby="addPartnerModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 id="addPartnerModalLabel" class="modal-title">Добавить партнёра</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="/add_partner" id="addPartnerForm">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Наименование</label>
+                            <input type="text" name="name" id="name" class="form-control" required aria-describedby="nameHelp">
+                            <div id="nameHelp" class="form-text">Введите название компании</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="legal_address" class="form-label">Юридический адрес</label>
+                            <input type="text" name="legal_address" id="legal_address" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label for="inn" class="form-label">ИНН</label>
+                            <input type="text" name="inn" id="inn" class="form-control" pattern="\d{10,12}" aria-describedby="innHelp">
+                            <div id="innHelp" class="form-text">10 или 12 цифр</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="director_full_name" class="form-label">ФИО директора</label>
+                            <input type="text" name="director_full_name" id="director_full_name" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Телефон</label>
+                            <input type="text" name="phone" id="phone" class="form-control" pattern="\+?\d{10,15}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" name="email" id="email" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label for="rating" class="form-label">Рейтинг (0–5)</label>
+                            <input type="number" name="rating" id="rating" class="form-control" min="0" max="5" step="0.1">
+                        </div>
+                        <button type="submit" class="btn-accent mt-3" id="submitPartnerBtn">Добавить</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-bs-dismiss="modal" aria-label="Закрыть">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 id="addUserModalLabel" class="modal-title">Добавить пользователя</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="/add_user" id="addUserForm">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Имя пользователя</label>
+                            <input type="text" name="username" id="username" class="form-control" required aria-describedby="usernameHelp">
+                            <div id="usernameHelp" class="form-text">Введите уникальное имя пользователя</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" name="email" id="email" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Пароль</label>
+                            <input type="password" name="password" id="password" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Роль</label>
+                            <select name="role" id="role" class="form-control" onchange="togglePartnerId()">
+                                <option value="partner">Партнёр</option>
+                                <option value="manager">Менеджер</option>
+                                <option value="analyst">Аналитик</option>
+                            </select>
+                        </div>
+                        <div class="mb-3" id="partnerIdGroup">
+                            <label for="partner_id" class="form-label">Партнёр</label>
+                            <select name="partner_id" id="partner_id" class="form-control">
+                                <option value="">Выберите партнёра</option>
+                                {% for partner in partners %}
+                                    <option value="{{ partner[0] }}">{{ partner[1] }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-accent mt-3" id="submitUserBtn">Добавить</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-bs-dismiss="modal" aria-label="Закрыть">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/static/js/scripts.js"></script>
+    <script>
+        function togglePartnerId() {
+            const role = document.getElementById('role') ? document.getElementById('role').value : 'partner';
+            const partnerIdGroup = document.getElementById('partnerIdGroup');
+            if (partnerIdGroup) {
+                partnerIdGroup.style.display = role === 'partner' ? 'block' : 'none';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', togglePartnerId);
+    </script>
 </body>
 </html>

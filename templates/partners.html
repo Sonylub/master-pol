@@ -5,51 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Партнёры | Мастер Пол</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/static/css/styles.css">
     <link rel="icon" href="/static/images/logo.png">
 </head>
 <body>
     <header>
-        <div class="container">
-            <div class="logo">
-                <img src="/static/images/logo.png" alt="Мастер Пол" class="logo-img">
+        <div class="container header-container">
+            <div class="logo-block">
+                <img src="/static/images/logo.png" alt="Логотип Мастер Пол" class="logo-img">
+                <h1 class="app-title">Мастер Пол — Производственная компания</h1>
             </div>
-            <button class="nav-toggle" aria-label="Toggle navigation">☰</button>
+            <button class="nav-toggle" aria-label="Переключить меню">
+                <span class="hamburger"></span>
+            </button>
             <nav>
                 <ul class="nav">
                     {% if current_user.is_authenticated %}
-                        <li><span>Привет, {{ current_user.username }} ({{ current_user.role }})!</span></li>
-                        <li><a href="/logout">Выйти</a></li>
+                        <li><span class="user-info">Привет, {{ current_user.username }} ({{ current_user.role }})!</span></li>
+                        <li><a href="/logout"><i class="fas fa-sign-out-alt"></i> Выйти</a></li>
+                        {% if current_user.role == 'manager' %}
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-users"></i> Партнёры <i class="fas fa-caret-down"></i>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/partners">Список партнёров</a></li>
+                                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addPartnerModal">Добавить партнёра</a></li>
+                                    <li><a class="dropdown-item" href="/upload">Импорт CSV</a></li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user"></i> Пользователи <i class="fas fa-caret-down"></i>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/users">Список пользователей</a></li>
+                                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addUserModal">Добавить пользователя</a></li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-file-alt"></i> Заявки <i class="fas fa-caret-down"></i>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/requests">Все заявки</a></li>
+                                    <li><a class="dropdown-item" href="/add_request">Добавить заявку</a></li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-warehouse"></i> Склад и материалы <i class="fas fa-caret-down"></i>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/supplies">Поставки</a></li>
+                                    <li><a class="dropdown-item" href="/materials">Материалы</a></li>
+                                    <li><a class="dropdown-item" href="/products">Продукция</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="/calc"><i class="fas fa-calculator"></i> Расчёт</a></li>
+                        {% elif current_user.role == 'partner' %}
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-file-alt"></i> Заявки <i class="fas fa-caret-down"></i>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/my_requests">История реализации</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="/products"><i class="fas fa-box"></i> Продукция</a></li>
+                        {% endif %}
                     {% else %}
-                        <li><a href="/login">Вход</a></li>
-                        <li><a href="/register">Регистрация</a></li>
+                        <li><a href="/login"><i class="fas fa-sign-in-alt"></i> Вход</a></li>
+                        <li><a href="/register"><i class="fas fa-user-plus"></i> Регистрация</a></li>
                     {% endif %}
-                    <li><a href="/partners" class="active">Партнёры</a></li>
-                    {% if current_user.is_authenticated and current_user.role == 'manager' %}
-                        <li><a href="#" data-bs-toggle="modal" data-bs-target="#addPartnerModal">Добавить партнёра</a></li>
-                    {% endif %}
-                    <li><a href="/requests">Заявки</a></li>
-                    {% if current_user.is_authenticated and current_user.role == 'manager' %}
-                        <li><a href="/add_request">Добавить заявку</a></li>
-                    {% endif %}
-                    {% if current_user.is_authenticated and current_user.role == 'partner' %}
-                        <li><a href="/my_requests">Мои заявки</a></li>
-                    {% endif %}
-                    <li><a href="/supplies">Поставки</a></li>
-                    <li><a href="/materials">Материалы</a></li>
-                    <li><a href="/products">Продукция</a></li>
-                    {% if current_user.is_authenticated and current_user.role == 'manager' %}
-                        <li><a href="/upload">Импорт CSV</a></li>
-                    {% endif %}
-                    <li><a href="/calc">Расчёт</a></li>
                 </ul>
             </nav>
         </div>
     </header>
 
     <main class="container">
-        <section class="dashboard">
-            <h1>Список партнёров</h1>
+        <section class="dashboard my-5">
+            <h2 class="section-title">Список партнёров</h2>
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
@@ -93,7 +130,7 @@
             <!-- Таблица партнёров -->
             {% if partners %}
             <div class="table-responsive">
-                <table class="table table-bordered">
+                <table class="table table-bordered table-striped">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -104,6 +141,7 @@
                             <th>Телефон</th>
                             <th>Email</th>
                             <th>Рейтинг</th>
+                            <th>Объём поставок</th>
                             <th>Скидка</th>
                             <th>Действия</th>
                         </tr>
@@ -119,20 +157,24 @@
                             <td>{{ partner[5] or '-' }}</td>
                             <td>{{ partner[6] or '-' }}</td>
                             <td>{{ partner[7] or '-' }}</td>
+                            <td>
+                                {% set total_volume = namespace(value=0) %}
+                                {% for req in requests if partner_requests[partner[0]] %}
+                                    {% set total_volume.value = total_volume.value + req[5] %}
+                                {% endfor %}
+                                {{ total_volume.value | int }}
+                            </td>
                             <td>{{ (partner[8] * 100) | int }}%</td>
                             <td>
                                 <a href="/partner_requests/{{ partner[0] }}" class="view-icon" title="Просмотр реализации">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
-                                        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
-                                        <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
-                                    </svg>
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="#" class="users-icon" data-bs-toggle="modal" data-bs-target="#viewUsersModal" data-partner-id="{{ partner[0] }}" data-partner-name="{{ partner[1] }}">
+                                    <i class="fas fa-users"></i>
                                 </a>
                                 {% if current_user.is_authenticated and current_user.role == 'manager' %}
                                 <a href="#" class="delete-icon" data-bs-toggle="modal" data-bs-target="#deletePartnerModal" data-partner-id="{{ partner[0] }}" data-partner-name="{{ partner[1] }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
-                                    </svg>
+                                    <i class="fas fa-trash"></i>
                                 </a>
                                 {% endif %}
                             </td>
@@ -217,7 +259,29 @@
             </div>
             {% endif %}
 
-            <a href="/" class="btn btn-secondary">Назад</a>
+            <!-- Модальное окно для просмотра пользователей -->
+            {% if current_user.is_authenticated and current_user.role in ['manager', 'analyst'] %}
+            <div class="modal fade" id="viewUsersModal" tabindex="-1" aria-labelledby="viewUsersModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="viewUsersModalLabel">Пользователи партнёра <strong id="users-partner-name"></strong></h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="users-list">
+                                <p class="text-muted">Пользователи не найдены.</p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <a href="/" class="btn btn-secondary mt-3">Назад</a>
         </section>
     </main>
 
@@ -237,6 +301,29 @@
                 const partnerName = this.getAttribute('data-partner-name');
                 document.getElementById('partner-name').textContent = partnerName;
                 document.getElementById('partner-id').value = partnerId;
+            });
+        });
+
+        // Передача данных в модальное окно пользователей
+        document.querySelectorAll('.users-icon').forEach(icon => {
+            icon.addEventListener('click', function() {
+                const partnerId = this.getAttribute('data-partner-id');
+                const partnerName = this.getAttribute('data-partner-name');
+                document.getElementById('users-partner-name').textContent = partnerName;
+
+                // Получение списка пользователей для партнёра
+                const users = JSON.parse('{{ users_by_partner | tojson }}')[partnerId] || [];
+                const usersList = document.getElementById('users-list');
+                if (users.length > 0) {
+                    let html = '<table class="table table-striped"><thead><tr><th>ID</th><th>Имя пользователя</th><th>Email</th><th>Роль</th></tr></thead><tbody>';
+                    users.forEach(user => {
+                        html += `<tr><td>${user[0]}</td><td>${user[1]}</td><td>${user[2]}</td><td>${user[3]}</td></tr>`;
+                    });
+                    html += '</tbody></table>';
+                    usersList.innerHTML = html;
+                } else {
+                    usersList.innerHTML = '<p class="text-muted">Пользователи не найдены.</p>';
+                }
             });
         });
     </script>

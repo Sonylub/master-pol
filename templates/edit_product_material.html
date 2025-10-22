@@ -1,0 +1,160 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактировать связь продукт-материал | Мастер Пол</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="icon" href="/static/images/logo.png">
+</head>
+<body>
+    <header>
+        <div class="container header-container">
+            <div class="logo-block">
+                <img src="/static/images/logo.png" alt="Логотип Мастер Пол" class="logo-img">
+                <h1 class="app-title">Мастер Пол — Производственная компания</h1>
+            </div>
+            <button class="nav-toggle" aria-label="Переключить меню">
+                <span class="hamburger"></span>
+            </button>
+            <nav>
+                <ul class="nav">
+                    {% if current_user.is_authenticated %}
+                        <li><span class="user-info">Привет, {{ current_user.username }} ({{ current_user.role }})!</span></li>
+                        <li><a href="/logout"><i class="fas fa-sign-out-alt"></i> Выйти</a></li>
+                        {% if current_user.role == 'manager' %}
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-users"></i> Партнёры <i class="fas fa-caret-down"></i>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/partners">Список партнёров</a></li>
+                                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addPartnerModal">Добавить партнёра</a></li>
+                                    <li><a class="dropdown-item" href="/upload">Импорт CSV</a></li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user"></i> Пользователи <i class="fas fa-caret-down"></i>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/users">Список пользователей</a></li>
+                                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addUserModal">Добавить пользователя</a></li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-file-alt"></i> Заявки <i class="fas fa-caret-down"></i>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/requests">Все заявки</a></li>
+                                    <li><a class="dropdown-item" href="/add_request">Добавить заявку</a></li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-warehouse"></i> Склад и материалы <i class="fas fa-caret-down"></i>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/supplies">Поставки</a></li>
+                                    <li><a class="dropdown-item" href="/materials">Материалы</a></li>
+                                    <li><a class="dropdown-item" href="/products">Продукция</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="/calc" class="active"><i class="fas fa-calculator"></i> Расчёт</a></li>
+                        {% endif %}
+                    {% else %}
+                        <li><a href="/login"><i class="fas fa-sign-in-alt"></i> Вход</a></li>
+                        <li><a href="/register"><i class="fas fa-user-plus"></i> Регистрация</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="dashboard my-5">
+            <h2 class="section-title">Редактировать связь: {{ product_material[1] }} - {{ product_material[3] }}</h2>
+            {% if db_status %}
+            <div class="alert {{ 'alert-success' if db_status.status == 'success' else 'alert-danger' }}">
+                {{ db_status.message }}
+            </div>
+            {% endif %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ 'alert-success' if category == 'success' else 'alert-danger' }}" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <form method="POST" action="{{ url_for('calc.edit_product_material', product_id=product_material[0], material_id=product_material[2]) }}">
+                <div class="mb-3">
+                    <label for="product_id" class="form-label">Продукт</label>
+                    <input type="text" class="form-control" id="product_id" value="{{ product_material[1] }}" disabled>
+                </div>
+                <div class="mb-3">
+                    <label for="material_id" class="form-label">Материал</label>
+                    <input type="text" class="form-control" id="material_id" value="{{ product_material[3] }}" disabled>
+                </div>
+                <div class="mb-3">
+                    <label for="quantity" class="form-label">Количество</label>
+                    <input type="number" step="0.01" class="form-control" id="quantity" name="quantity" value="{{ product_material[4] }}" min="0" required>
+                </div>
+                <button type="submit" class="btn btn-accent">Сохранить</button>
+                <a href="{{ url_for('calc.calc') }}" class="btn btn-secondary">Отмена</a>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>© 2025 Мастер Пол. Все права защищены.</p>
+        </div>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/scripts.js"></script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask_login import login_required, current_user
+from models import role_required
+from db import get_db_connection
+import logging
+from werkzeug.exceptions import abort
+import psycopg2
+
+materials_bp = Blueprint('materials', __name__)
+logger = logging.getLogger(__name__)
+
+@materials_bp.route('/materials', methods=['GET'])
+@login_required
+@role_required('analyst', 'manager', 'partner')
+def materials():
+    try:
+        conn, db_status = get_db_connection()
+        if not conn:
+            return render_template('materials.html', materials=[], db_status=db_status)
+        cursor = conn.cursor()
+        
+        search = request.args.get('search', '')
+        sort = request.args.get('sort', 'name_asc')
+
+        query = """
+            SELECT MaterialID, Name, Unit, Cost, QuantityInStock, MinAllowedQuantity
+            FROM Materials
+            WHERE 1=1
+        """
+        params = []
+
+        if search:
+            query += " AND Name ILIKE %s"
+            params.append(f"%{search}%")
+
+        if sort == 'name_asc':
+            query += " ORDER BY Name ASC"
+        elif sort == 'name_desc':
+            query += " ORDER BY Name DESC"
+        elif sort == 'cost_desc':
+            query += " ORDER BY Cost DESC"
+        elif sort == 'cost_asc':
+            query += " ORDER BY Cost ASC"
+        elif sort == 'quantity_desc':
+            query += " ORDER BY QuantityInStock DESC"
+        elif sort == 'quantity_asc':
+            query += " ORDER BY QuantityInStock ASC"
+
+        cursor.execute(query, params)
+        materials = cursor.fetchall()
+        logger.info(f"Найдено материалов: {len(materials)}")
+        
+        cursor.close()
+        conn.close()
+        return render_template('materials.html', materials=materials, db_status={'status': 'success', 'message': 'OK'})
+    except Exception as e:
+        logger.error(f"Ошибка в /materials: {str(e)}")
+        return render_template('materials.html', materials=[], db_status={'status': 'error', 'message': str(e)})
+
+@materials_bp.route('/add_material', methods=['GET', 'POST'])
+@login_required
+@role_required('manager')
+def add_material():
+    if request.method == 'POST':
+        name = request.form['name']
+        unit = request.form.get('unit') or None
+        cost = float(request.form['cost']) if request.form.get('cost') else None
+        quantity_in_stock = float(request.form['quantity_in_stock']) if request.form.get('quantity_in_stock') else 0
+        min_allowed_quantity = float(request.form['min_allowed_quantity']) if request.form.get('min_allowed_quantity') else 0
+        
+        conn, db_status = get_db_connection()
+        if not conn:
+            flash(db_status['message'], 'error')
+            return redirect(url_for('materials.materials'))
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                """
+                INSERT INTO Materials (Name, Unit, Cost, QuantityInStock, MinAllowedQuantity)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                (name, unit, cost, quantity_in_stock, min_allowed_quantity)
+            )
+            conn.commit()
+            flash('Материал успешно добавлен', 'success')
+            return redirect(url_for('materials.materials'))
+        except psycopg2.IntegrityError:
+            conn.rollback()
+            flash('Материал с таким названием уже существует', 'error')
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"Ошибка при создании материала: {str(e)}")
+            flash(f'Ошибка: {str(e)}', 'error')
+        finally:
+            cursor.close()
+            conn.close()
+    return render_template('add_material.html', db_status={'status': 'success', 'message': 'OK'})
+
+@materials_bp.route('/edit_material/<int:material_id>', methods=['GET', 'POST'])
+@login_required
+@role_required('manager')
+def edit_material(material_id):
+    conn, db_status = get_db_connection()
+    if not conn:
+        flash(db_status['message'], 'error')
+        return redirect(url_for('materials.materials'))
+    cursor = conn.cursor()
+    if request.method == 'POST':
+        name = request.form['name']
+        unit = request.form.get('unit') or None
+        cost = float(request.form['cost']) if request.form.get('cost') else None
+        quantity_in_stock = float(request.form['quantity_in_stock']) if request.form.get('quantity_in_stock') else 0
+        min_allowed_quantity = float(request.form['min_allowed_quantity']) if request.form.get('min_allowed_quantity') else 0
+        try:
+            cursor.execute(
+                """
+                UPDATE Materials
+                SET Name = %s, Unit = %s, Cost = %s, QuantityInStock = %s, MinAllowedQuantity = %s
+                WHERE MaterialID = %s
+                """,
+                (name, unit, cost, quantity_in_stock, min_allowed_quantity, material_id)
+            )
+            if cursor.rowcount == 0:
+                conn.rollback()
+                flash('Материал не найден', 'error')
+            else:
+                conn.commit()
+                flash('Материал успешно обновлён', 'success')
+            return redirect(url_for('materials.materials'))
+        except psycopg2.IntegrityError:
+            conn.rollback()
+            flash('Материал с таким названием уже существует', 'error')
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"Ошибка при обновлении материала {material_id}: {str(e)}")
+            flash(f'Ошибка: {str(e)}', 'error')
+        finally:
+            cursor.close()
+            conn.close()
+            return redirect(url_for('materials.materials'))
+    try:
+        cursor.execute(
+            """
+            SELECT MaterialID, Name, Unit, Cost, QuantityInStock, MinAllowedQuantity
+            FROM Materials
+            WHERE MaterialID = %s
+            """,
+            (material_id,)
+        )
+        material = cursor.fetchone()
+        if not material:
+            cursor.close()
+            conn.close()
+            flash('Материал не найден', 'error')
+            return redirect(url_for('materials.materials'))
+        return render_template('edit_material.html', material=material, db_status=db_status)
+    except Exception as e:
+        logger.error(f"Ошибка при получении материала {material_id}: {str(e)}")
+        flash(f'Ошибка: {str(e)}', 'error')
+        return redirect(url_for('materials.materials'))
+    finally:
+        cursor.close()
+        conn.close()
+
+@materials_bp.route('/delete_material', methods=['POST'])
+@login_required
+@role_required('manager')
+def delete_material():
+    material_id = request.form['material_id']
+    
+    conn, db_status = get_db_connection()
+    if not conn:
+        flash(db_status['message'], 'error')
+        return redirect(url_for('materials.materials'))
+    
+    cursor = conn.cursor()
+    try:
+        # Проверяем, есть ли связанные записи в ProductMaterials
+        cursor.execute("SELECT COUNT(*) FROM ProductMaterials WHERE MaterialID = %s", (material_id,))
+        product_count = cursor.fetchone()[0]
+        if product_count > 0:
+            conn.rollback()
+            flash("Нельзя удалить материал, так как он используется в продукции", "error")
+            return redirect(url_for('materials.materials'))
+        
+        cursor.execute("DELETE FROM Materials WHERE MaterialID = %s", (material_id,))
+        if cursor.rowcount == 0:
+            flash("Материал не найден", "error")
+        else:
+            conn.commit()
+            flash("Материал успешно удалён!", "success")
+    except psycopg2.Error as e:
+        conn.rollback()
+        logger.error(f"Ошибка удаления материала {material_id}: {str(e)}")
+        flash(f"Ошибка удаления: {str(e)}", "error")
+    finally:
+        cursor.close()
+        conn.close()
+    
+    return redirect(url_for('materials.materials'))

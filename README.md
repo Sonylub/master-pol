@@ -20,27 +20,39 @@
 ## Файловая структура
 ```
 master-pol/
-├── .venv/
-├── app.py
-├── requirements.txt
-├── vercel.json
+├── static/
+│   ├── css/
+│   │   └── styles.css
+│   ├── js/
+│   │   └── scripts.js
+│   ├── images/
+│   │   └── logo.png
 ├── templates/
 │   ├── index.html
 │   ├── partners.html
-│   ├── error.html
-│   ├── add_partner.html
-│   ├── add_request.html
-│   ├── calc.html
-│   ├── materials.html
-│   ├── products.html
+│   ├── partner_requests.html
 │   ├── requests.html
+│   ├── add_request.html
 │   ├── supplies.html
+│   ├── products.html
+│   ├── materials.html
 │   ├── upload.html
-├── static/
-│   ├── css/styles.css
-│   ├── images/logo.png
-│   └── uploads/
-├── sql/init.sql
-├── docs/README.md
-└── setup.py
+│   ├── calc.html
+│   ├── login.html
+│   ├── register.html
+│   ├── error.html
+├── .env
+├── requirements.txt
+├── app.py
+├── config.py
+├── auth.py
+├── partners.py
+├── requests.py
+├── supplies.py
+├── products.py
+├── materials.py
+├── upload.py
+├── calc.py
+├── db.py
+├── models.py
 ```
