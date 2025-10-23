@@ -63,7 +63,7 @@
                                     <li><a class="dropdown-item" href="/products">Продукция</a></li>
                                 </ul>
                             </li>
-                            <li><a href="/calc"><i class="fas fa-calculator"></i> Расчёт</a></li>
+                            <li><a href="/calc" class="{% if request.path == '/calc' %}active{% endif %}"><i class="fas fa-calculator"></i> Расчёт</a></li>
                         {% elif current_user.role == 'partner' %}
                             <li class="dropdown">
                                 <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -74,6 +74,11 @@
                                 </ul>
                             </li>
                             <li><a href="/products"><i class="fas fa-box"></i> Продукция</a></li>
+                            <li><a href="/materials"><i class="fas fa-cubes"></i> Материалы</a></li>
+                            <li><a href="/calc" class="{% if request.path == '/calc' %}active{% endif %}"><i class="fas fa-calculator"></i> Расчёт</a></li>
+                        {% elif current_user.role == 'analyst' %}
+                            <li><a href="/materials"><i class="fas fa-cubes"></i> Материалы</a></li>
+                            <li><a href="/calc" class="{% if request.path == '/calc' %}active{% endif %}"><i class="fas fa-calculator"></i> Расчёт</a></li>
                         {% endif %}
                     {% else %}
                         <li><a href="/login"><i class="fas fa-sign-in-alt"></i> Вход</a></li>
@@ -105,7 +110,6 @@
                 </div>
                 <div class="col-12 col-md-6 text-center">
                     <img src="/static/images/flooring_sample.jpg" alt="Пример напольного покрытия" class="img-fluid rounded shadow-sm">
-                    <p class="text-muted mt-2">Пример напольного покрытия (замените на реальное изображение).</p>
                 </div>
             </div>
             <div class="row align-items-center mt-4">
@@ -121,8 +125,7 @@
                     </ul>
                 </div>
                 <div class="col-12 col-md-6 order-md-1 text-center">
-                    <img src="/static/images/production_process.jpg" alt="Производственный процесс" class="img-fluid rounded shadow-sm">
-                    <p class="text-muted mt-2">Производственный процесс (замените на реальное изображение).</p>
+                    <img src="/static/images/krips_to_fiat.jpg" alt="Производственный процесс" class="img-fluid rounded shadow-sm">
                 </div>
             </div>
         </section>
@@ -182,6 +185,27 @@
                         <p>Каталог напольных покрытий</p>
                         <a href="/products" class="btn-accent">Перейти</a>
                     </div>
+                    <div class="card">
+                        <h3><i class="fas fa-cubes"></i> Материалы</h3>
+                        <p>Список материалов</p>
+                        <a href="/materials" class="btn-accent">Перейти</a>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-calculator"></i> Расчёт</h3>
+                        <p>Просмотр связей продукт-материал</p>
+                        <a href="/calc" class="btn-accent">Перейти</a>
+                    </div>
+                {% elif current_user.role == 'analyst' %}
+                    <div class="card">
+                        <h3><i class="fas fa-cubes"></i> Материалы</h3>
+                        <p>Список материалов</p>
+                        <a href="/materials" class="btn-accent">Перейти</a>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-calculator"></i> Расчёт</h3>
+                        <p>Автоматизация расчёта материалов</p>
+                        <a href="/calc" class="btn-accent">Перейти</a>
+                    </div>
                 {% endif %}
             </div>
         </section>
@@ -237,7 +261,7 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn-secondary" data-bs-dismiss="modal" aria-label="Закрыть">Закрыть</button>
+                    <button type="button" class="btn-secondary" data-bs-dismiss="modal" aria-label="Закрыть"></button>
                 </div>
             </div>
         </div>
@@ -286,7 +310,7 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn-secondary" data-bs-dismiss="modal" aria-label="Закрыть">Закрыть</button>
+                    <button type="button" class="btn-secondary" data-bs-dismiss="modal" aria-label="Закрыть"></button>
                 </div>
             </div>
         </div>
